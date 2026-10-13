@@ -1,0 +1,87 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "NHTSA Vehicle Recalls API",
+    "description": "JSON REST API for official US NHTSA vehicle safety recalls, looked up by model year, make, and model. Available on RapidAPI: https://rapidapi.com/crisp-point-studio-crisp-point-studio-default/api/live-nhtsa-vehicle-recalls",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Crisp Point Studio",
+      "url": "https://rapidapi.com/crisp-point-studio-crisp-point-studio-default/api/live-nhtsa-vehicle-recalls"
+    }
+  },
+  "servers": [
+    { "url": "https://live-nhtsa-vehicle-recalls.p.rapidapi.com", "description": "RapidAPI" }
+  ],
+  "security": [ { "RapidAPIKey": [], "RapidAPIHost": [] } ],
+  "paths": {
+    "/api/recalls": {
+      "get": {
+        "operationId": "getRecalls",
+        "summary": "List safety recalls for a vehicle",
+        "description": "Returns all NHTSA safety recalls for one vehicle identified by model year, make, and model. Returns 404 when NHTSA has no recalls on file for that vehicle.",
+        "parameters": [
+          { "name": "year", "in": "query", "required": true, "description": "Model year.", "schema": { "type": "integer" }, "example": 2021 },
+          { "name": "make", "in": "query", "required": true, "description": "Vehicle make, case-insensitive.", "schema": { "type": "string" }, "example": "Toyota" },
+          { "name": "model", "in": "query", "required": true, "description": "Vehicle model, case-insensitive.", "schema": { "type": "string" }, "example": "Camry" },
+          { "name": "limit", "in": "query", "required": false, "description": "Maximum recalls to return.", "schema": { "type": "integer", "minimum": 1, "maximum": 250, "default": 50 }, "example": 25 }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recalls for the vehicle.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RecallResponse" },
+                "example": {
+                  "count": 1,
+                  "total": 1,
+                  "recalls": [
+                    {
+                      "Manufacturer": "Toyota Motor Engineering & Manufacturing",
+                      "Component": "AIR BAGS:SENSOR:OCCUPANT CLASSIFICATION",
+                      "Summary": "Toyota is recalling certain 2020-2022 Camry and Camry Hybrid vehicles. A short circuit may develop in the Occupant Classification System (OCS) sensor, preventing the front passenger air bag from deploying.",
+                      "Consequence": "An air bag that does not deploy during a crash increases the risk of injury.",
+                      "Remedy": "Dealers will inspect and replace the sensor as necessary, free of charge."
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "description": "Missing or invalid RapidAPI key." },
+          "404": { "description": "NHTSA has no recalls on file for this vehicle." },
+          "422": { "description": "Missing or invalid query parameter." },
+          "429": { "description": "Plan quota or rate limit exceeded." },
+          "502": { "description": "The NHTSA database was unreachable." }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "RapidAPIKey": { "type": "apiKey", "in": "header", "name": "X-RapidAPI-Key" },
+      "RapidAPIHost": { "type": "apiKey", "in": "header", "name": "X-RapidAPI-Host" }
+    },
+    "schemas": {
+      "RecallResponse": {
+        "type": "object",
+        "required": ["count", "total", "recalls"],
+        "properties": {
+          "count": { "type": "integer", "description": "Number of recalls in this response." },
+          "total": { "type": "integer", "description": "Total recalls NHTSA has for this vehicle." },
+          "recalls": { "type": "array", "items": { "$ref": "#/components/schemas/Recall" } }
+        }
+      },
+      "Recall": {
+        "type": "object",
+        "required": ["Manufacturer", "Component", "Summary", "Consequence", "Remedy"],
+        "properties": {
+          "Manufacturer": { "type": "string", "description": "Manufacturer filing the recall." },
+          "Component": { "type": "string", "description": "Affected system in NHTSA's component taxonomy.", "example": "AIR BAGS:SENSOR:OCCUPANT CLASSIFICATION" },
+          "Summary": { "type": "string", "description": "What is wrong and which vehicles are affected." },
+          "Consequence": { "type": "string", "description": "The safety risk." },
+          "Remedy": { "type": "string", "description": "What the manufacturer will do." }
+        }
+      }
+    }
+  }
+}
